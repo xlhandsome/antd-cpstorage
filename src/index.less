@@ -1,0 +1,46 @@
+
+html, body, :global(#root) {
+  height: 100%;
+}
+
+:global{
+  .codeWrapper{
+    padding:20px 60px;
+  }
+  
+  .srcollWrapper{
+    height:500px;
+    overflow-y: scroll;
+    width:100%;
+  }
+  
+  .qrcodeWrapper{
+    display: inline-block;
+    width:18%;
+  }
+  
+  .qrcodeTextBox{
+    display: inline-block;
+    width: 60%;
+    vertical-align: top;
+    padding: 36px 0;
+    :global(.ant-input-affix-wrapper){
+      width:80%!important; 
+      margin-left: 4px;
+      input{
+        height:40px;
+      }
+    }
+    span:nth-child(1){
+      font-size:18px;
+    }
+  }
+  .qrcodeReadBox{
+		:global{
+			div:global(.ant-upload-list-item-error){
+        border-color:#d9d9d9!important;
+      }
+		}
+	}
+}
+
