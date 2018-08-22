@@ -1,6 +1,6 @@
 # 基于antd封装的组件
 
- ### 1模态框列表
+ ### 模态框列表
  ![头像](http://img1.ph.126.net/mfWDYmkj89wQqAQ2imJkbw==/6597634915635665140.png)
  ### 下拉加载
  ![头像](http://img2.ph.126.net/ZWfVHRxz09kltolohGelAA==/6597803140914683132.png)   
