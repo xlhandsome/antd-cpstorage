@@ -335,7 +335,11 @@ ModalTable.propTypes = {
 };
 
 
-// 数组过滤
+/**
+
+ * @param {function|mapFun}  	数组遍历
+ * @param {function|filterFun}  数组筛选
+ */
 function arrayEnum(mapFun,filterFun){
     if( typeof filterFun != 'function' ){
         filterFun = () => true;
@@ -347,7 +351,16 @@ function arrayEnum(mapFun,filterFun){
         return array.filter(filterFun).map(mapFun);
     };
 }
-// 列表全选
+/**
+ *
+ *
+ * @param {boolean|selected}  是否勾选全选,antd组件返回
+ * @param {array|changeRows}  当前页改变的rows,antd组件返回
+ * @param {array|selectedRowKeys}  目前为止选中的key数组
+ * @param {array|selectedRows}  目前为止选中的row数组
+ * @param {string|[keyName='commoditycode']}  列表的key
+ * 
+ */
 function selectAll(selected, changeRows, selectedRowKeys, selectedRows,keyName = 'commoditycode') {
     if (selected) {
         // 勾选当前页时，筛选出不是重复的数据
