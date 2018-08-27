@@ -1,7 +1,8 @@
 import { PureComponent } from 'react';
-import { Button,Modal,Table,Input,Form } from 'antd';
+import { Button,Modal,Table,Form } from 'antd';
 import PropTypes from 'prop-types';
 const FormItem = Form.Item;
+
 @Form.create()
 
 class ModalTable extends PureComponent {
@@ -13,8 +14,11 @@ class ModalTable extends PureComponent {
 		this.resetFields = resetFields;
 		this.state = {
 			isInputing:false,
-			selectedRowKeys:props.tableConfig.selectedRowKeys || [],
-			selectedRows:props.tableConfig.selectedRows || [],
+			selectedRowKeys:[...props.tableConfig.selectedRowKeys] || [],
+			selectedRows:[...props.tableConfig.selectedRows] || [],
+			formValue:{
+
+			},
 			modalPagination:{
                 current:1,
                 page:10
@@ -31,7 +35,7 @@ class ModalTable extends PureComponent {
 		for( var key in searchParams ){
 			if( searchParams[key] !== null ) isInputing = true;
 		}
-		!isInputing && this.setState({selectedRowKeys,selectedRows});
+		!isInputing && this.setState({selectedRowKeys:[...selectedRowKeys],selectedRows:[...selectedRows]});
 	}
 
 	/**
@@ -39,9 +43,25 @@ class ModalTable extends PureComponent {
 	*/
 	closeModal = ()=>{
 		const { closeModal } = this.props;
-		this.resetFields();
-		this.setState({isInputing:false});
+		this.resetAllState();
 		typeof closeModal == 'function' && closeModal();
+	}
+
+	/**
+	 * @function 关闭时重置所有状态
+	*/
+	resetAllState = ()=>{
+		this.resetFields();
+		this.setState({
+			isInputing:false,
+			modalPagination:{
+				current:1,
+                page:10
+			},
+			formValue:{
+
+			},
+		});
 	}
 
 	/**
@@ -49,8 +69,7 @@ class ModalTable extends PureComponent {
 	*/
 	modalChoose = ()=>{
 		const { onChoose } = this.props;
-		this.resetFields();
-		this.setState({isInputing:false});
+		this.resetAllState();
 		onChoose({
 			selectedRowKeys:this.state.selectedRowKeys,
 			selectedRows:this.state.selectedRows
@@ -67,14 +86,15 @@ class ModalTable extends PureComponent {
 			width:'66%',
 			title,
 			visible,
+			maskClosable:false,
 			onCancel:this.closeModal
 		};
 		if( typeof onChoose != 'function' ){
 			modalSet.footer = [<Button onClick={this.closeModal}>关闭</Button>]
 		}else{
 			modalSet.footer = [
-				<Button onClick={this.closeModal}>取消</Button>,
-				<Button onClick={this.modalChoose} type="primary">确定</Button>
+				<Button onClick={this.closeModal} key="cancel">取消</Button>,
+				<Button onClick={this.modalChoose} type="primary" key="confirm">确定</Button>
 			]
 		}
 		return modalSet;
@@ -91,7 +111,11 @@ class ModalTable extends PureComponent {
                 current:pagination.current,
                 total:pagination.total
             }
-		},()=>onSearch(this.getFieldsValue(),this.state.modalPagination));
+		},()=>{
+			const { formValue,modalPagination } = this.state;
+			const { current,page } = modalPagination;
+			onSearch({...formValue,page:current,pagesize:page});
+		})
 	}
 	
 	/**
@@ -99,9 +123,56 @@ class ModalTable extends PureComponent {
 	*/
 	tableConfig(mapColumnsFun){
 		const { dataSource = [],totalsNum = 0,type = 'checkbox',loading,rowKey } = this.props.tableConfig;
-		const { modalPagination,selectedRows,selectedRowKeys } = this.state;
+		const { modalPagination,selectedRowKeys,selectedRows } = this.state;
 		const _this = this;
-        const rowSelection = {
+		const checkHandle = (record,selected,index)=>{
+            for( var item of dataSource ){
+                if( record[rowKey]== item[rowKey] ){
+                    item.icCheck = selected;
+                }
+            }
+            if( selected ){
+                let isHad = false;
+                selectedRowKeys.map((item,index)=>{
+                    if( item == record[rowKey]  ) isHad = true;
+                })
+                if( !isHad ){
+                    selectedRowKeys.push(record[rowKey]);
+                    selectedRows.push(record);
+                }
+            }else{
+                selectedRowKeys.map((item,index)=>{
+                    if( item == record[rowKey] ) selectedRowKeys.remove(index);
+                })
+                selectedRows.map((item,index)=>{
+                    if( item[rowKey] == record[rowKey]  ) selectedRows.remove(index);
+                })
+			}
+			this.setState({
+				selectedRowKeys,
+				selectedRows,
+				isInputing:true
+			});
+			this.forceUpdate();
+		}
+		const rowSelection_checkBox = {
+			type,
+            selectedRowKeys,
+            onSelect:checkHandle,
+            onSelectAll:(selected, selectedRowsNull, changeRows)=>{
+                for( var item of dataSource ){
+                    item.icCheck = selected;
+                }
+                const selectComb = selectAll(selected,changeRows,selectedRowKeys,selectedRows,rowKey);
+				this.setState({
+					selectedRowKeys:selectComb[0],
+					selectedRows:selectComb[1],
+					isInputing:true
+				});
+				this.forceUpdate()
+            }
+		};
+		const rowSelection_radio = {
             type,
             selectedRowKeys,
             onChange: (selectedRowKeys, selectedRows) => {
@@ -116,11 +187,15 @@ class ModalTable extends PureComponent {
 		modalPagination.total = totalsNum;
 		var that = this;
 		return function setColumns(columnsList){
+			if( dataSource && dataSource.length && type != "radio" ){
+				that.makeSign(dataSource);
+			}
 			return {
+				size:"middle",
 				columns:mapColumnsFun(columnsList),
 				dataSource,
 				onChange:_this.handleTableChange,
-				rowSelection,
+				rowSelection:type == "radio"?rowSelection_radio:rowSelection_checkBox,
 				pagination:modalPagination,
 				loading,
 				rowKey:function(record){
@@ -128,20 +203,39 @@ class ModalTable extends PureComponent {
 				},
 				onRow:(record)=>{
 					return {
-						onClick: (e) => {
-							that.setState({isInputing:true});
-							if( type == 'checkbox' ){
-								e.currentTarget.getElementsByClassName("ant-checkbox-wrapper")[0].click();
-							}else if( type == 'radio' ){
+						onClick:(e)=>{
+							if( type == 'radio' ){
 								e.currentTarget.getElementsByClassName("ant-radio-wrapper")[0].click();
+							}else{
+								record.icCheck = !record.icCheck;
+								checkHandle(record,record.icCheck);
 							}
-						},
+						}
 					}
 				}
 			}
 		}
 	}
-
+	/**
+     * @function   根据selectRowKeys给列表数据打上选择标志.
+     * 1.每一次查询调getShopGuideList接口时都要将新得到的列表数据打上标记.
+     * 2.每一次改变selectedRowKeys时也需要打上标记.
+     */
+    makeSign(dataSource){
+        const { selectedRowKeys } = this.state;
+        const { rowKey } = this.props.tableConfig;
+        for( var item of dataSource ){
+			let isHas = false;
+			const isHasKey = (pl)=>{
+				if( pl == item[rowKey] ){
+                    item.icCheck = true;
+                    isHas = true;
+                }
+			}
+			arrayEnum(isHasKey)(selectedRowKeys);
+            if( !isHas ) item.icCheck = false;
+        };
+    }
 	/**
 	 * @function 渲染搜索条件
 	 */
@@ -158,18 +252,29 @@ class ModalTable extends PureComponent {
 						}
 					</FormItem>
 		});
-		const { current:page,page:pagesize } = this.state.modalPagination
+		const { page:pagesize } = this.state.modalPagination
 		searchComponent.push(
-			<FormItem>
+			<FormItem key="last">
 				<Button
 					type="primary"
 					htmlType="submit"
 					icon="search"
-					onClick={()=>onSearch({
-						...this.getFieldsValue(),
-						page,
-						pagesize
-					})}
+					onClick={()=>{
+						this.setState({
+							modalPagination:{
+								...this.state.modalPagination,
+								current:1
+							},
+							formValue:{
+								...this.getFieldsValue()
+							}
+						});
+						onSearch({
+							...this.getFieldsValue(),
+							page:1,
+							pagesize
+						})
+					}}
 				>
 					查询
 				</Button>
@@ -193,7 +298,7 @@ class ModalTable extends PureComponent {
 				columnsItem.render = function(text,record,cdex){
 					return <span>{cdex+1}</span>
 				}
-			}
+			};
             return columnsItem;
         })
 	}	
@@ -218,7 +323,7 @@ class ModalTable extends PureComponent {
 			</Modal>
         )
     }
-}
+};
 
 ModalTable.propTypes = {
 	modalConfig:PropTypes.object.isRequired, // 弹窗配置
@@ -227,5 +332,60 @@ ModalTable.propTypes = {
 	searchList:PropTypes.array,// 查询组件
 	onSearch:PropTypes.func, // 查询回调
 	onChoose:PropTypes.func, // 确定回调
+};
+
+
+// 数组过滤
+function arrayEnum(mapFun,filterFun){
+    if( typeof filterFun != 'function' ){
+        filterFun = () => true;
+    };
+    if( typeof mapFun != 'function' ){
+        mapFun = item => item;
+    };
+    return function(array = []){
+        return array.filter(filterFun).map(mapFun);
+    };
 }
+// 列表全选
+function selectAll(selected, changeRows, selectedRowKeys, selectedRows,keyName = 'commoditycode') {
+    if (selected) {
+        // 勾选当前页时，筛选出不是重复的数据
+        const filterFun = (item)=>{
+            let isHad = false;
+            for ( var value of selectedRowKeys ) {
+                if (item[keyName] == value)
+                    isHad = true;
+            }
+            return !isHad;
+        };
+        const mapFun = (item)=>{
+            selectedRowKeys.push(item[keyName]);
+            selectedRows.push(item);
+        };
+        arrayEnum(mapFun,filterFun)(changeRows);
+    } else {
+        // 取消勾选当前页时，筛选出除'取消勾选页'的其他所有数据
+        const filterKeysFun = (item)=>{
+            let isHad = false;
+            let mapFun = (row)=>{
+                if( row[keyName] == item ) isHad = true;
+            };
+            arrayEnum(mapFun)(changeRows);
+            return !isHad;
+        }
+        const filterRowsFun = (item)=>{
+            let isHad = false;
+            let mapFun = (row)=>{
+                if( row[keyName] == item[keyName] ) isHad = true;
+            };
+            arrayEnum(mapFun)(changeRows);
+            return !isHad;
+        }
+        selectedRowKeys = arrayEnum(null,filterKeysFun)(selectedRowKeys);
+        selectedRows = arrayEnum(null,filterRowsFun)(selectedRows);
+    }
+    return [selectedRowKeys, selectedRows];
+}
+
 export default ModalTable;
