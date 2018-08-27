@@ -125,52 +125,44 @@ class ModalTable extends PureComponent {
 		const { dataSource = [],totalsNum = 0,type = 'checkbox',loading,rowKey } = this.props.tableConfig;
 		const { modalPagination,selectedRowKeys,selectedRows } = this.state;
 		const _this = this;
-		const checkHandle = (record,selected,index)=>{
-            for( var item of dataSource ){
-                if( record[rowKey]== item[rowKey] ){
-                    item.icCheck = selected;
-                }
-            }
-            if( selected ){
-                let isHad = false;
-                selectedRowKeys.map((item,index)=>{
-                    if( item == record[rowKey]  ) isHad = true;
-                })
-                if( !isHad ){
-                    selectedRowKeys.push(record[rowKey]);
-                    selectedRows.push(record);
-                }
-            }else{
-                selectedRowKeys.map((item,index)=>{
-                    if( item == record[rowKey] ) selectedRowKeys.remove(index);
-                })
-                selectedRows.map((item,index)=>{
-                    if( item[rowKey] == record[rowKey]  ) selectedRows.remove(index);
-                })
+		const selectSingelRow = (record, selected, newSelectedRows)=>{
+			if(selected === true) {
+				this.setState((prevState, props)=>({
+					selectedRows:window._.uniqWith(selectedRows.concat(newSelectedRows), window._.isEqual),
+					selectedRowKeys:window._.uniqWith(selectedRowKeys.concat(record[rowKey]), window._.isEqual),
+					isInputing:true
+				}));
+			} else {
+				this.setState((prevState, props)=>({
+					selectedRows:prevState.selectedRows.filter(item => item[rowKey]!= record[rowKey]),
+					selectedRowKeys:prevState.selectedRowKeys.filter(item => item != record[rowKey]),
+					isInputing:true
+				}));
 			}
-			this.setState({
-				selectedRowKeys,
-				selectedRows,
-				isInputing:true
-			});
 			this.forceUpdate();
-		}
+		};
+		const selectAllRows = (selected, selectedRows, changeRows)=>{
+			const changeRowsKey = changeRows.map(item=>item[rowKey]);
+			if( selected == true ){
+				this.setState((prevState, props)=>({
+					selectedRows:window._.uniqWith(prevState.selectedRows.concat(changeRows), window._.isEqual),
+					selectedRowKeys:window._.uniqWith(prevState.selectedRowKeys.concat(changeRowsKey), window._.isEqual),
+					isInputing:true
+				}));
+			}else{
+				this.setState((prevState, props)=>({
+					selectedRows:window._.difference(prevState.selectedRows,changeRows),
+					selectedRowKeys:window._.difference(prevState.selectedRowKeys,changeRowsKey),
+					isInputing:true
+				}));
+			}
+			this.forceUpdate();
+		};
 		const rowSelection_checkBox = {
 			type,
             selectedRowKeys,
-            onSelect:checkHandle,
-            onSelectAll:(selected, selectedRowsNull, changeRows)=>{
-                for( var item of dataSource ){
-                    item.icCheck = selected;
-                }
-                const selectComb = selectAll(selected,changeRows,selectedRowKeys,selectedRows,rowKey);
-				this.setState({
-					selectedRowKeys:selectComb[0],
-					selectedRows:selectComb[1],
-					isInputing:true
-				});
-				this.forceUpdate()
-            }
+            onSelect: selectSingelRow,
+            onSelectAll: selectAllRows
 		};
 		const rowSelection_radio = {
             type,
@@ -201,14 +193,14 @@ class ModalTable extends PureComponent {
 				rowKey:function(record){
 					return rowKey && record[rowKey] || record.id;
 				},
-				onRow:(record)=>{
+				onRow:(record,test)=>{
 					return {
 						onClick:(e)=>{
 							if( type == 'radio' ){
 								e.currentTarget.getElementsByClassName("ant-radio-wrapper")[0].click();
 							}else{
 								record.icCheck = !record.icCheck;
-								checkHandle(record,record.icCheck);
+								selectSingelRow(record,record.icCheck,[record])
 							}
 						}
 					}
@@ -217,7 +209,7 @@ class ModalTable extends PureComponent {
 		}
 	}
 	/**
-     * @function   根据selectRowKeys给列表数据打上选择标志.
+     * @function   根据selectRowKeys给列表数据打上选择标志,用于行点击选中|取消;
      * 1.每一次查询调getShopGuideList接口时都要将新得到的列表数据打上标记.
      * 2.每一次改变selectedRowKeys时也需要打上标记.
      */
@@ -350,55 +342,6 @@ function arrayEnum(mapFun,filterFun){
     return function(array = []){
         return array.filter(filterFun).map(mapFun);
     };
-}
-/**
- *
- *
- * @param {boolean|selected}  是否勾选全选,antd组件返回
- * @param {array|changeRows}  当前页改变的rows,antd组件返回
- * @param {array|selectedRowKeys}  目前为止选中的key数组
- * @param {array|selectedRows}  目前为止选中的row数组
- * @param {string|[keyName='commoditycode']}  列表的key
- * 
- */
-function selectAll(selected, changeRows, selectedRowKeys, selectedRows,keyName = 'commoditycode') {
-    if (selected) {
-        // 勾选当前页时，筛选出不是重复的数据
-        const filterFun = (item)=>{
-            let isHad = false;
-            for ( var value of selectedRowKeys ) {
-                if (item[keyName] == value)
-                    isHad = true;
-            }
-            return !isHad;
-        };
-        const mapFun = (item)=>{
-            selectedRowKeys.push(item[keyName]);
-            selectedRows.push(item);
-        };
-        arrayEnum(mapFun,filterFun)(changeRows);
-    } else {
-        // 取消勾选当前页时，筛选出除'取消勾选页'的其他所有数据
-        const filterKeysFun = (item)=>{
-            let isHad = false;
-            let mapFun = (row)=>{
-                if( row[keyName] == item ) isHad = true;
-            };
-            arrayEnum(mapFun)(changeRows);
-            return !isHad;
-        }
-        const filterRowsFun = (item)=>{
-            let isHad = false;
-            let mapFun = (row)=>{
-                if( row[keyName] == item[keyName] ) isHad = true;
-            };
-            arrayEnum(mapFun)(changeRows);
-            return !isHad;
-        }
-        selectedRowKeys = arrayEnum(null,filterKeysFun)(selectedRowKeys);
-        selectedRows = arrayEnum(null,filterRowsFun)(selectedRows);
-    }
-    return [selectedRowKeys, selectedRows];
 }
 
 export default ModalTable;
