@@ -1,0 +1,28 @@
+.popWrapper{
+    position: relative;
+    .canvasWrapper{
+        position: absolute;
+        top:0;
+        left:0;
+        z-index:150;
+    }
+    .componentWrapper{
+        width: 100%;
+        position: relative;
+        z-index:200;
+    }
+    .popMainShow{
+        position: absolute;
+        z-index:200;
+        animation: filterIn 0.8s cubic-bezier(1,.04,.86,.59) 1;
+    }
+}
+
+@keyframes filterIn{
+    0%{
+        opacity: 0;
+    }
+    100%{
+        opacity: 1;
+    }
+}

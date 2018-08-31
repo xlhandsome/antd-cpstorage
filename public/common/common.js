@@ -14,7 +14,11 @@ const menuConfig = [
     {
         name:'地图搜索',
         path:'/#/mapsearch'
-    }
+    },
+    {
+        name:'气泡弹窗',
+        path:'/#/popover'
+    },
 ]
 
 export {
