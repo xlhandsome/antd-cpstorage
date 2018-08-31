@@ -8,3 +8,5 @@
  ![头像](https://github.com/xlhandsome/antd-cpstorage/blob/master/public/introduce/qrcodeRead.png)   
  ### 地图搜索
  ![头像](https://github.com/xlhandsome/antd-cpstorage/blob/master/public/introduce/map.png)
+ ### 折线气泡
+ ![头像](https://github.com/xlhandsome/antd-cpstorage/blob/master/public/introduce/popover.png)
