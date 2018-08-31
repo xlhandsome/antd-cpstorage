@@ -237,6 +237,9 @@ class Popover extends Component {
 			linePoint[key].moveY = linePoint[key].startY;
 		}
 		var canvas = document.getElementById(keyName);
+		if( canvas == null ){
+			return;
+		}
 		var ctx = canvas.getContext("2d");
 		ctx.beginPath();
 		ctx.moveTo(startX, startY);
