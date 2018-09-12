@@ -77,7 +77,7 @@ class ModalTable extends PureComponent {
 	}
 
 	/**
-	 * @config 弹窗配置
+	 * @function 弹窗配置
 	*/
 	modalConfig = ()=>{
 		const { onChoose } = this.props;
@@ -90,12 +90,12 @@ class ModalTable extends PureComponent {
 			onCancel:this.closeModal
 		};
 		if( typeof onChoose != 'function' ){
-			modalSet.footer = [<Button onClick={this.closeModal}>关闭</Button>]
+			modalSet.footer = [<Button onClick={this.closeModal}>关闭</Button>];
 		}else{
 			modalSet.footer = [
 				<Button onClick={this.closeModal} key="cancel">取消</Button>,
 				<Button onClick={this.modalChoose} type="primary" key="confirm">确定</Button>
-			]
+			];
 		}
 		return modalSet;
 	}
@@ -119,7 +119,7 @@ class ModalTable extends PureComponent {
 	}
 	
 	/**
-	 * @config 列表配置
+	 * @param {mapColumnsFun|Fuction} :列表配置  mapColumnsFun:遍历表头方法
 	*/
 	tableConfig(mapColumnsFun){
 		const { dataSource = [],totalsNum = 0,type = 'checkbox',loading,rowKey } = this.props.tableConfig;
@@ -209,22 +209,22 @@ class ModalTable extends PureComponent {
 		}
 	}
 	/**
-     * @function   根据selectRowKeys给列表数据打上选择标志,用于行点击选中|取消;
-     * 1.每一次查询调getShopGuideList接口时都要将新得到的列表数据打上标记.
-     * 2.每一次改变selectedRowKeys时也需要打上标记.
+     * @param {dataSource|Array}  : datasource:列表数据   
+	 * 根据selectRowKeys给列表数据打上选择标志,用于行点击选中|取消;
      */
     makeSign(dataSource){
         const { selectedRowKeys } = this.state;
-        const { rowKey } = this.props.tableConfig;
-        for( var item of dataSource ){
-			let isHas = false;
-			const isHasKey = (pl)=>{
-				if( pl == item[rowKey] ){
-                    item.icCheck = true;
-                    isHas = true;
-                }
+		const { rowKey } = this.props.tableConfig;
+		var isHas = false;
+		const mapFun = (pl)=>{
+			if( pl == item[rowKey] ){
+				item.icCheck = true;
+				isHas = true;
 			}
-			arrayEnum(isHasKey)(selectedRowKeys);
+		};
+        for( var item of dataSource ){
+			isHas = false;
+			arrayEnum(mapFun)(selectedRowKeys);
             if( !isHas ) item.icCheck = false;
         };
     }
@@ -244,7 +244,7 @@ class ModalTable extends PureComponent {
 						}
 					</FormItem>
 		});
-		const { page:pagesize } = this.state.modalPagination
+		const { page:pagesize } = this.state.modalPagination;
 		searchComponent.push(
 			<FormItem key="last">
 				<Button
@@ -276,7 +276,7 @@ class ModalTable extends PureComponent {
 	}
 
 	/**
-	 * @function 渲染列表头部
+	 * @param {columnsList|Array} :渲染列表头部 columnsList:表头数组
 	 */
 	mapColumnsFun = (columnsList = [])=>{
         return columnsList.map((item,index)=>{
