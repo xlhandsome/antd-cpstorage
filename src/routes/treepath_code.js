@@ -91,7 +91,7 @@ class TreePathCode extends React.Component{
       <div>
         <section className="code-box">
           <section className="code-box-demo">
-            <TreePath treeData={treeData} handleSelect={this.handleSelect} defaultOpen={true} checkType="radio"/>
+            <TreePath treeData={treeData} handleSelect={this.handleSelect} defaultOpen={true} checkType="checkBox"/>
           </section>
           <section className="code-box-meta markdown">
             <div className="code-box-title">
