@@ -11,4 +11,4 @@
  ### 折线气泡
  ![头像](https://github.com/xlhandsome/antd-cpstorage/blob/master/public/introduce/popover.png)
  ### 树状穿梭框
- ![头像](https://github.com/xlhandsome/antd-cpstorage/blob/master/public/introduce/treePath.png
+ ![头像](https://github.com/xlhandsome/antd-cpstorage/blob/master/public/introduce/treePath.png)
