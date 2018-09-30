@@ -1,0 +1,198 @@
+/* you can make up upload button and sample style by using stylesheets */
+.treeWrapper{
+    margin:0 auto;
+    width:594px;
+    border-bottom:1px solid rgba(223,227,233,1);
+    .treeSelectBox{
+        display: inline-block;
+        width:288px;
+        border-right:1px solid rgba(223,227,233,1);
+        padding-bottom:49px;
+        .searchBox{
+            margin-top: 2px;
+            margin-bottom:20px;
+            input{
+                width:270px;
+            }
+            :global{
+                .ant-input-suffix{
+                    right:26px;
+                }
+            }
+        }
+        .controlBox{
+            height:237px;
+            width:270px;
+            overflow-y: auto;
+            /*定义滚动条高宽及背景 高宽分别对应横竖滚动条的尺寸*/ 
+            &::-webkit-scrollbar {    
+                width: 6px;     
+                height: 6px;     
+                background-color: #fff; 
+            }    
+            /*定义滚动条轨道 内阴影+圆角*/ 
+            &::-webkit-scrollbar-track {     
+                -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);    
+                border-radius: 10px;    
+                background-color: #fff; 
+            }    
+            /*定义滑块 内阴影+圆角*/ 
+            &::-webkit-scrollbar-thumb {    
+                border-radius: 10px;    
+                -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);   
+                background-color: rgba(53,64,82,1); 
+            }
+            &::-webkit-scrollbar-track-piece{
+                background:#fff;
+            }
+            :global{
+                .ant-tree-checkbox{
+                    position: relative;
+                    right: 18px;
+                    margin-right:12px;
+                }
+                .ant-tree-node-content-wrapper{
+                    height:28px;
+                    position: relative;
+                    right:13px;
+                    cursor: default;
+                    i{
+                        margin-right:11px;
+                    }
+                }
+                .ant-tree-treenode-switcher-close{
+                    padding:0;
+                    height:28px;
+                }
+                .ant-tree-switcher{
+                    left:24px;
+                }
+                .ant-tree-child-tree{
+                    .ant-tree-switcher{
+                        width:43px;
+                    }
+                    .ant-tree-node-content-wrapper{
+                        position: relative;
+                        right: 24px;
+                    }
+                }
+                .ant-tree-node-content-wrapper:hover{
+                    background:rgba(245,248,250,1);
+                }
+                .ant-tree-treenode-switcher-close:hover{
+                    background:rgba(245,248,250,1);
+                }
+                .ant-tree-checkbox-indeterminate{
+                    .ant-tree-checkbox-inner{
+                        background-color:#1890ff!important;
+                        border:0;
+                    }
+                    .ant-tree-checkbox-inner:after{
+                        background-color:#fff!important;
+                        height:2px!important;
+                    }
+                }
+                .ant-tree-node-selected{
+                    background-color:#fff;
+                }
+                .ant-tree-iconEle{
+                    cursor: default;
+                }
+                .ant-radio-group{
+                    width:100%;
+                    .ant-tree-switcher{
+                        left:0px;
+                    }
+                    .ant-tree-node-content-wrapper{
+                        right:2px;
+                    }
+                    .ant-tree-child-tree{
+                        i{
+                            margin-left:8px;
+                        }
+                        .ant-radio{
+                            position: relative;
+                            right:38px;
+                        }
+                        label{
+                            position: relative;
+                            right: 14px;
+                            cursor: default;
+                            &>span:nth-child(2){
+                                position: relative;
+                                right:10px;
+                            }
+                        }
+                        .ant-tree-switcher{
+                            left:0px;
+                            width:24px;
+                        }
+                    }
+                    
+                }
+            }
+        }
+    }
+    .treeVisualBox{
+        display: inline-block;
+        vertical-align: top;
+        padding-left:18px;
+        h4{
+            height:22px;
+            font-size:16px;
+            font-weight:400;
+            color:rgba(53,64,82,1);
+            line-height:22px;
+            margin-top:8px;
+            margin-bottom:22px;
+        }
+        .selectedBox{
+            height:237px;
+            width:287px;
+            overflow-y: auto;
+            position: relative;
+            top: 5px;
+            .selectedLine{
+                position: relative;
+                width:270px;
+                height:28px;
+                font-size:14px;
+                font-weight:400;
+                color:rgba(127,143,164,1);
+                line-height:28px;
+                i{
+                    margin:0 8px 0 8px;
+                }
+                .closeIcon{
+                    position: absolute;
+                    right:12px;
+                    top:-2px;
+                    cursor:pointer;
+                }
+            }
+            .selectedLine:hover{
+                background:rgba(245,248,250,1);
+            }
+            &::-webkit-scrollbar {    
+                width: 6px;     
+                height: 6px;     
+                background-color: #fff; 
+            }    
+            /*定义滚动条轨道 内阴影+圆角*/ 
+            &::-webkit-scrollbar-track {     
+                -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);    
+                border-radius: 10px;    
+                background-color: #fff; 
+            }    
+            /*定义滑块 内阴影+圆角*/ 
+            &::-webkit-scrollbar-thumb {    
+                border-radius: 10px;    
+                -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);   
+                background-color: rgba(53,64,82,1); 
+            }
+            &::-webkit-scrollbar-track-piece{
+                background:#fff;
+            }
+        }
+    }
+}

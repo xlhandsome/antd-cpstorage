@@ -19,6 +19,10 @@ const menuConfig = [
         name:'气泡弹窗',
         path:'/#/popover'
     },
+    {
+        name:'树状穿梭框',
+        path:'/#/treepath'
+    },
 ]
 
 export {

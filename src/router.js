@@ -6,6 +6,7 @@ import DropDownCode from './routes/dp_code';
 import QRcodeReadCode from './routes/qr_code';
 import Popover from './routes/pop_code';
 import MapCode from './routes/map_code';
+import TreePath from './routes/treepath_code';
 
 function RouterConfig({ history }) {
   return (
@@ -16,6 +17,7 @@ function RouterConfig({ history }) {
           <Route path="/mapsearch" exact component={MapCode} />
           <Route path="/dropdownload" exact component={DropDownCode} />
           <Route path="/qrcoderead" exact component={QRcodeReadCode} />
+          <Route path="/treepath" exact component={TreePath} />
           <Route path="/popover" exact component={Popover} />
         </Layouts>
       </Switch>
