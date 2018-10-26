@@ -12,7 +12,6 @@ class TreePath extends PureComponent {
   constructor(props) {
     super(props);
     this.handleSelect = props.handleSelect;
-    console.log(this.defaultOpenAll(props.treeData));
     this.state = {
       visualList:[],
       generateList:this.generateList(props.treeData),
@@ -131,6 +130,11 @@ class TreePath extends PureComponent {
         }
       }
     })
+    if( !rightContent.length ){
+      rightContent.push(
+        <img src="http://localhost:8000/img/shop2.png"/>
+      )
+    }
     return rightContent;
   }
   getColorStr = (str,index,value)=>{

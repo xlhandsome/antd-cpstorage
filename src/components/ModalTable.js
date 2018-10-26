@@ -1,5 +1,5 @@
 import { PureComponent } from 'react';
-import { Button,Modal,Table,Form } from 'antd';
+import { Button,Modal,Table,Form,message } from 'antd';
 import PropTypes from 'prop-types';
 const FormItem = Form.Item;
 
@@ -68,11 +68,17 @@ class ModalTable extends PureComponent {
 	 * @function 点击确定
 	*/
 	modalChoose = ()=>{
-		const { onChoose } = this.props;
+		const { onChoose,requiredMsg } = this.props;
+		const { selectedRows,selectedRowKeys } = this.state;
+
+		if( requiredMsg && !selectedRows.length ){
+			message.error(requiredMsg); 
+			return;
+		}
 		this.resetAllState();
 		onChoose({
-			selectedRowKeys:this.state.selectedRowKeys,
-			selectedRows:this.state.selectedRows
+			selectedRowKeys:[...selectedRowKeys],
+			selectedRows:[...selectedRows]
 		});
 	}
 
@@ -83,20 +89,17 @@ class ModalTable extends PureComponent {
 		const { onChoose } = this.props;
 		const { title = '',visible = false } = this.props.modalConfig;
 		const modalSet = {
-			width:'66%',
+			width:800,
 			title,
 			visible,
 			maskClosable:false,
-			onCancel:this.closeModal
+			onOk: this.modalChoose,
+			onCancel:this.closeModal,
+			className: "ModalX",
 		};
 		if( typeof onChoose != 'function' ){
 			modalSet.footer = [<Button onClick={this.closeModal}>关闭</Button>];
-		}else{
-			modalSet.footer = [
-				<Button onClick={this.closeModal} key="cancel">取消</Button>,
-				<Button onClick={this.modalChoose} type="primary" key="confirm">确定</Button>
-			];
-		}
+		};
 		return modalSet;
 	}
 
@@ -122,16 +125,26 @@ class ModalTable extends PureComponent {
 	 * @param {mapColumnsFun|Fuction} :列表配置  mapColumnsFun:遍历表头方法
 	*/
 	tableConfig(mapColumnsFun){
-		const { dataSource = [],totalsNum = 0,type = 'checkbox',loading,rowKey } = this.props.tableConfig;
+		const { dataSource = [],totalsNum = 0,type = 'checkbox',loading,rowKey,hidePagination,footerSource = [] } = this.props.tableConfig;
 		const { modalPagination,selectedRowKeys,selectedRows } = this.state;
 		const _this = this;
 		const selectSingelRow = (record, selected, newSelectedRows)=>{
 			if(selected === true) {
-				this.setState((prevState, props)=>({
-					selectedRows:window._.uniqWith(selectedRows.concat(newSelectedRows), window._.isEqual),
-					selectedRowKeys:window._.uniqWith(selectedRowKeys.concat(record[rowKey]), window._.isEqual),
-					isInputing:true
-				}));
+				this.setState((prevState, props)=>{
+					let filterKeys = prevState.selectedRowKeys;
+					let filterRows = prevState.selectedRows;
+					let setRowkey = new Set(filterKeys);
+
+					if( !setRowkey.has(record[rowKey]) ){
+						filterRows = [...filterRows,record];
+						filterKeys = [...filterKeys,record[rowKey]];
+					}
+					return{
+						selectedRows:filterRows,
+						selectedRowKeys:filterKeys,
+						isInputing:true
+					}
+				});
 			} else {
 				this.setState((prevState, props)=>({
 					selectedRows:prevState.selectedRows.filter(item => item[rowKey]!= record[rowKey]),
@@ -144,11 +157,13 @@ class ModalTable extends PureComponent {
 		const selectAllRows = (selected, selectedRows, changeRows)=>{
 			const changeRowsKey = changeRows.map(item=>item[rowKey]);
 			if( selected == true ){
-				this.setState((prevState, props)=>({
-					selectedRows:window._.uniqWith(prevState.selectedRows.concat(changeRows), window._.isEqual),
-					selectedRowKeys:window._.uniqWith(prevState.selectedRowKeys.concat(changeRowsKey), window._.isEqual),
-					isInputing:true
-				}));
+				this.setState((prevState, props)=>{
+					return {
+						selectedRows:window._.uniqWith(prevState.selectedRows.concat(changeRows), window._.isEqual),
+						selectedRowKeys:window._.uniqWith(prevState.selectedRowKeys.concat(changeRowsKey), window._.isEqual),
+						isInputing:true
+					}
+				});
 			}else{
 				this.setState((prevState, props)=>({
 					selectedRows:window._.difference(prevState.selectedRows,changeRows),
@@ -162,33 +177,35 @@ class ModalTable extends PureComponent {
 			type,
             selectedRowKeys,
             onSelect: selectSingelRow,
-            onSelectAll: selectAllRows
+			onSelectAll: selectAllRows,
 		};
 		const rowSelection_radio = {
             type,
             selectedRowKeys,
-            onChange: (selectedRowKeys, selectedRows) => {
+            onChange: (selectedRowKeys, selectedRows,test) => {
                 this.setState({
                     selectedRowKeys,
 					selectedRows,
 					isInputing:true
-                })
+				});
             }
         };
         modalPagination.showTotal = ()=>`共 ${totalsNum} 条`;
 		modalPagination.total = totalsNum;
 		var that = this;
+		const isShow = dataSource.length == 0 ? { display: "none" } : { display: "block" };
+      
 		return function setColumns(columnsList){
 			if( dataSource && dataSource.length && type != "radio" ){
 				that.makeSign(dataSource);
 			}
 			return {
 				size:"middle",
-				columns:mapColumnsFun(columnsList),
+				columns:mapColumnsFun(columnsList,footerSource.length),
 				dataSource,
 				onChange:_this.handleTableChange,
-				rowSelection:type == "radio"?rowSelection_radio:rowSelection_checkBox,
-				pagination:modalPagination,
+				rowSelection:type == 'null'?null:type == "radio"?rowSelection_radio:rowSelection_checkBox,
+				pagination:hidePagination?false:modalPagination,
 				loading,
 				rowKey:function(record){
 					return rowKey && record[rowKey] || record.id;
@@ -204,13 +221,36 @@ class ModalTable extends PureComponent {
 							}
 						}
 					}
-				}
+				},
+				footer:footerSource.length && dataSource.length?() => {
+					return (
+					  	<Table
+							showHeader={false}
+							columns={columnsList.map(item=>{
+								const columnsItem = {
+									align:'center',
+									title:item.name,
+									dataIndex:item.key,
+									key:item.keykey,
+									width:90
+								};
+								return columnsItem;
+							})}	
+							dataSource={footerSource}
+							rowKey={record => record[rowKey] || record.id}
+							pagination={false}
+							style={isShow}
+						/>
+					);
+				}:null
 			}
 		}
 	}
 	/**
      * @param {dataSource|Array}  : datasource:列表数据   
-	 * 根据selectRowKeys给列表数据打上选择标志,用于行点击选中|取消;
+	 * 1.根据selectRowKeys给列表数据打上选择标志,用于行点击选中|取消;
+     * 2.每一次查询调getShopGuideList接口时都要将新得到的列表数据打上标记.
+     * 3.每一次改变selectedRowKeys时也需要打上标记.
      */
     makeSign(dataSource){
         const { selectedRowKeys } = this.state;
@@ -245,7 +285,7 @@ class ModalTable extends PureComponent {
 					</FormItem>
 		});
 		const { page:pagesize } = this.state.modalPagination;
-		searchComponent.push(
+		searchComponent.length && searchComponent.push(
 			<FormItem key="last">
 				<Button
 					type="primary"
@@ -278,13 +318,16 @@ class ModalTable extends PureComponent {
 	/**
 	 * @param {columnsList|Array} :渲染列表头部 columnsList:表头数组
 	 */
-	mapColumnsFun = (columnsList = [])=>{
+	mapColumnsFun = (columnsList = [],fixWidth)=>{
         return columnsList.map((item,index)=>{
             const columnsItem = {
                 align:'center',
                 title:item.name,
                 dataIndex:item.key,
-                key:item.key
+                key:item.keykey,
+			};
+			if( fixWidth ) {
+				columnsItem.width = 90;
 			}
 			if( item.name == '序号' ){
 				columnsItem.render = function(text,record,cdex){
@@ -296,6 +339,7 @@ class ModalTable extends PureComponent {
 	}	
 
     render() {
+		const { searchList } = this.props;
 		const { columnsList } = this.props.tableConfig;
         return (
             <Modal {...this.modalConfig()}>
@@ -305,11 +349,12 @@ class ModalTable extends PureComponent {
 							{ this.renderSearch() }
 						</Form>	
 					</div>
-					<div style={{marginTop:'20px'}}>
-						<Table
+					<div className={searchList.length && "mt20"}>
+						<div className="tablelist bgcf"> {/*如果table用了scroll属性, 这里再加个scrollTable的样式, 用于解决table内容换行问题*/}
+                            <Table
 							{ ...this.tableConfig(this.mapColumnsFun)(columnsList) }
-							bordered
 						/>
+                        </div>
 					</div>
 				</div>
 			</Modal>
