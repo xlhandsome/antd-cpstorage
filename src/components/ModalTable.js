@@ -3,8 +3,6 @@ import { Button,Modal,Table,Form,message } from 'antd';
 import PropTypes from 'prop-types';
 const FormItem = Form.Item;
 
-@Form.create()
-
 class ModalTable extends PureComponent {
 	constructor(props) {
 		super(props);
@@ -68,14 +66,17 @@ class ModalTable extends PureComponent {
 	 * @function 点击确定
 	*/
 	modalChoose = ()=>{
-		const { onChoose,requiredMsg } = this.props;
-		const { selectedRows,selectedRowKeys } = this.state;
+		const { onChoose,requiredMsg,isCover,tableConfig:{dataSource = [],type = 'checkbox',rowKey} } = this.props;
+		let { selectedRows,selectedRowKeys } = this.state;
 
 		if( requiredMsg && !selectedRows.length ){
 			message.error(requiredMsg); 
 			return;
 		}
 		this.resetAllState();
+		if( isCover && type == 'radio' ){
+			selectedRows = dataSource.filter(item=>item[rowKey] == selectedRowKeys[0]);
+		}
 		onChoose({
 			selectedRowKeys:[...selectedRowKeys],
 			selectedRows:[...selectedRows]
@@ -98,7 +99,7 @@ class ModalTable extends PureComponent {
 			className: "ModalX",
 		};
 		if( typeof onChoose != 'function' ){
-			modalSet.footer = [<Button onClick={this.closeModal}>关闭</Button>];
+			modalSet.footer = [<Button key="footer" onClick={this.closeModal}>关闭</Button>];
 		};
 		return modalSet;
 	}
@@ -128,56 +129,25 @@ class ModalTable extends PureComponent {
 		const { dataSource = [],totalsNum = 0,type = 'checkbox',loading,rowKey,hidePagination,footerSource = [] } = this.props.tableConfig;
 		const { modalPagination,selectedRowKeys,selectedRows } = this.state;
 		const _this = this;
-		const selectSingelRow = (record, selected, newSelectedRows)=>{
-			if(selected === true) {
-				this.setState((prevState, props)=>{
-					let filterKeys = prevState.selectedRowKeys;
-					let filterRows = prevState.selectedRows;
-					let setRowkey = new Set(filterKeys);
-
-					if( !setRowkey.has(record[rowKey]) ){
-						filterRows = [...filterRows,record];
-						filterKeys = [...filterKeys,record[rowKey]];
-					}
-					return{
-						selectedRows:filterRows,
-						selectedRowKeys:filterKeys,
-						isInputing:true
-					}
-				});
-			} else {
-				this.setState((prevState, props)=>({
-					selectedRows:prevState.selectedRows.filter(item => item[rowKey]!= record[rowKey]),
-					selectedRowKeys:prevState.selectedRowKeys.filter(item => item != record[rowKey]),
-					isInputing:true
-				}));
-			}
-			this.forceUpdate();
-		};
-		const selectAllRows = (selected, selectedRows, changeRows)=>{
-			const changeRowsKey = changeRows.map(item=>item[rowKey]);
-			if( selected == true ){
-				this.setState((prevState, props)=>{
-					return {
-						selectedRows:window._.uniqWith(prevState.selectedRows.concat(changeRows), window._.isEqual),
-						selectedRowKeys:window._.uniqWith(prevState.selectedRowKeys.concat(changeRowsKey), window._.isEqual),
-						isInputing:true
-					}
-				});
-			}else{
-				this.setState((prevState, props)=>({
-					selectedRows:window._.difference(prevState.selectedRows,changeRows),
-					selectedRowKeys:window._.difference(prevState.selectedRowKeys,changeRowsKey),
-					isInputing:true
-				}));
-			}
+		const selectChange = (selectedKeysNow, selectedRowsNow)=>{
+			const newRows = [...selectedRows,...selectedRowsNow];
+			const filterRows = [];
+			newRows.map(item=>{
+				if( !new Set(filterRows.map(item=>item[rowKey])).has(item[rowKey]) && new Set(selectedKeysNow).has(item[rowKey]) ){
+					filterRows.push(item);
+				}
+			});
+			this.setState({
+				selectedRows:filterRows,
+				selectedRowKeys:selectedKeysNow,
+				isInputing:true
+			});
 			this.forceUpdate();
 		};
 		const rowSelection_checkBox = {
 			type,
-            selectedRowKeys,
-            onSelect: selectSingelRow,
-			onSelectAll: selectAllRows,
+			selectedRowKeys,
+			onChange:selectChange,
 		};
 		const rowSelection_radio = {
             type,
@@ -192,13 +162,9 @@ class ModalTable extends PureComponent {
         };
         modalPagination.showTotal = ()=>`共 ${totalsNum} 条`;
 		modalPagination.total = totalsNum;
-		var that = this;
 		const isShow = dataSource.length == 0 ? { display: "none" } : { display: "block" };
       
 		return function setColumns(columnsList){
-			if( dataSource && dataSource.length && type != "radio" ){
-				that.makeSign(dataSource);
-			}
 			return {
 				size:"middle",
 				columns:mapColumnsFun(columnsList,footerSource.length),
@@ -210,14 +176,13 @@ class ModalTable extends PureComponent {
 				rowKey:function(record){
 					return rowKey && record[rowKey] || record.id;
 				},
-				onRow:(record,test)=>{
+				onRow:()=>{
 					return {
 						onClick:(e)=>{
 							if( type == 'radio' ){
 								e.currentTarget.getElementsByClassName("ant-radio-wrapper")[0].click();
 							}else{
-								record.icCheck = !record.icCheck;
-								selectSingelRow(record,record.icCheck,[record])
+								e.currentTarget.getElementsByClassName("ant-checkbox-wrapper")[0].click();
 							}
 						}
 					}
@@ -246,28 +211,6 @@ class ModalTable extends PureComponent {
 			}
 		}
 	}
-	/**
-     * @param {dataSource|Array}  : datasource:列表数据   
-	 * 1.根据selectRowKeys给列表数据打上选择标志,用于行点击选中|取消;
-     * 2.每一次查询调getShopGuideList接口时都要将新得到的列表数据打上标记.
-     * 3.每一次改变selectedRowKeys时也需要打上标记.
-     */
-    makeSign(dataSource){
-        const { selectedRowKeys } = this.state;
-		const { rowKey } = this.props.tableConfig;
-		var isHas = false;
-		const mapFun = (pl)=>{
-			if( pl == item[rowKey] ){
-				item.icCheck = true;
-				isHas = true;
-			}
-		};
-        for( var item of dataSource ){
-			isHas = false;
-			arrayEnum(mapFun)(selectedRowKeys);
-            if( !isHas ) item.icCheck = false;
-        };
-    }
 	/**
 	 * @function 渲染搜索条件
 	 */
@@ -305,7 +248,7 @@ class ModalTable extends PureComponent {
 							...this.getFieldsValue(),
 							page:1,
 							pagesize
-						})
+						});
 					}}
 				>
 					查询
@@ -371,22 +314,4 @@ ModalTable.propTypes = {
 	onChoose:PropTypes.func, // 确定回调
 };
 
-
-/**
-
- * @param {function|mapFun}  	数组遍历
- * @param {function|filterFun}  数组筛选
- */
-function arrayEnum(mapFun,filterFun){
-    if( typeof filterFun != 'function' ){
-        filterFun = () => true;
-    };
-    if( typeof mapFun != 'function' ){
-        mapFun = item => item;
-    };
-    return function(array = []){
-        return array.filter(filterFun).map(mapFun);
-    };
-}
-
-export default ModalTable;
+export default Form.create()(ModalTable);
