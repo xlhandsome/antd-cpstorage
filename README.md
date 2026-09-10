@@ -1,3 +1,5 @@
+
+
 # 基于antd封装的组件
 
  ### 模态框列表
@@ -12,3 +14,5 @@
  ![头像](https://github.com/xlhandsome/antd-cpstorage/blob/master/public/introduce/popover.png)
  ### 树状穿梭框
  ![头像](https://github.com/xlhandsome/antd-cpstorage/blob/master/public/introduce/treePath.png)
+
+npm start 启动项目
